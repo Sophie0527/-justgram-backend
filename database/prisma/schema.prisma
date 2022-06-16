@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model comments {
+  id         Int       @id @default(autoincrement())
+  comment    String    @db.VarChar(2000)
+  posting_id Int
+  user_id    Int
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  postings   postings  @relation(fields: [posting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_posting_comment")
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_comment")
+
+  @@index([posting_id], map: "fk_posting_comment")
+  @@index([user_id], map: "fk_user_comment")
+}
+
+model likes {
+  id         Int      @id @default(autoincrement())
+  posting_id Int
+  user_id    Int
+  postings   postings @relation(fields: [posting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_posting_like")
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_like")
+
+  @@index([posting_id], map: "fk_posting_like")
+  @@index([user_id], map: "fk_user_like")
+}
+
+model posting_images {
+  id         Int       @id @default(autoincrement())
+  posting_id Int
+  image_url  String?   @db.VarChar(250)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  postings   postings  @relation(fields: [posting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_posting_posting_image")
+
+  @@index([posting_id], map: "fk_posting_posting_image")
+}
+
+model postings {
+  id             Int              @id @default(autoincrement())
+  user_id        Int
+  postingType    String?          @db.VarChar(100)
+  contents       String?          @db.VarChar(2000)
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?        @db.Timestamp(0)
+  users          users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_posting")
+  comments       comments[]
+  likes          likes[]
+  posting_images posting_images[]
+
+  @@index([user_id], map: "fk_user_posting")
+}
+
+model users {
+  id            Int        @id @default(autoincrement())
+  email         String     @unique(map: "email") @db.VarChar(100)
+  nickname      String?    @db.VarChar(50)
+  password      String     @db.VarChar(300)
+  profile_image String?    @db.VarChar(3000)
+  created_at    DateTime?  @default(now()) @db.Timestamp(0)
+  comments      comments[]
+  likes         likes[]
+  postings      postings[]
+}
